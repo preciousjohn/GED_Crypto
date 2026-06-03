@@ -1,0 +1,204 @@
+.portfolio {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--ck-white);
+  -webkit-overflow-scrolling: touch;
+}
+
+.portfolio__header {
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+}
+
+.portfolio__label {
+  margin: 0 0 var(--space-xs);
+  font-size: 14px;
+  color: var(--ck-gray-700);
+}
+
+.portfolio__balance {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--ck-black);
+}
+
+.portfolio__change {
+  margin: var(--space-xs) 0 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.portfolio__change--positive {
+  color: var(--ck-green);
+}
+
+.portfolio__chart {
+  margin: 0 var(--space-md) var(--space-md);
+  height: 160px;
+  background: var(--ck-gray-100);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portfolio__chart span {
+  font-size: 13px;
+  color: var(--ck-gray-500);
+}
+
+.portfolio__timeframes {
+  display: flex;
+  gap: 2px;
+  padding: 0 var(--space-md) var(--space-md);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.portfolio__timeframe {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ck-gray-700);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.portfolio__timeframe--active {
+  background: var(--ck-green-dark);
+  color: var(--ck-white);
+}
+
+.portfolio__available {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-md);
+  border: none;
+  border-top: 1px solid var(--ck-gray-300);
+  border-bottom: 1px solid var(--ck-gray-300);
+  background: var(--ck-white);
+  font-size: 15px;
+  color: var(--ck-black);
+  cursor: pointer;
+  text-align: left;
+}
+
+.portfolio__chevron {
+  font-size: 20px;
+  color: var(--ck-gray-500);
+}
+
+.portfolio__holdings {
+  padding: var(--space-md);
+  padding-bottom: 100px;
+}
+
+.portfolio__section-title {
+  margin: 0 0 var(--space-md);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ck-black);
+}
+
+.portfolio__holding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.portfolio__holding + .portfolio__holding {
+  border-top: 1px solid var(--ck-gray-100);
+}
+
+.portfolio__holding-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ck-white);
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.portfolio__holding-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.portfolio__holding-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ck-black);
+}
+
+.portfolio__holding-amount {
+  font-size: 13px;
+  color: var(--ck-gray-700);
+}
+
+.portfolio__holding-value {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portfolio__holding-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ck-black);
+}
+
+.portfolio__holding-change {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.portfolio__holding-change--positive {
+  color: var(--ck-green);
+}
+
+.portfolio__holding-change--negative {
+  color: var(--ck-red);
+}
+
+.portfolio__actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--ck-white);
+  border-top: 1px solid var(--ck-gray-100);
+}
+
+.portfolio__action-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--ck-blue);
+  color: var(--ck-white);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.portfolio__action-btn:hover {
+  background: var(--ck-blue-dark);
+}

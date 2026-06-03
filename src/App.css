@@ -1,0 +1,52 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: #e8eaed;
+}
+
+.phone-frame {
+  width: var(--phone-width);
+  height: var(--phone-height);
+  background: var(--ck-white);
+  border-radius: 44px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.phone-frame__status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ck-black);
+  flex-shrink: 0;
+}
+
+.phone-frame__status-icons {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.phone-frame__content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .app {
+    padding: 16px;
+  }
+}

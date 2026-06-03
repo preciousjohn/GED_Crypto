@@ -1,0 +1,47 @@
+.copilot-fab {
+  position: absolute;
+  bottom: 88px;
+  right: 20px;
+  z-index: 50;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--ck-white);
+  box-shadow: var(--shadow-fab);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.copilot-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 119, 197, 0.45);
+}
+
+.copilot-fab:active {
+  transform: scale(0.97);
+}
+
+.copilot-fab--open {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+.copilot-fab__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--ck-blue);
+  opacity: 0;
+  animation: fabPulse 3s ease-out infinite;
+}
+
+@keyframes fabPulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.35); opacity: 0; }
+}

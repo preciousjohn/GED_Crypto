@@ -1,0 +1,71 @@
+.copilot-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.copilot-avatar svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.copilot-avatar__head {
+  transform-origin: 50px 50px;
+  animation: headFloat 6s ease-in-out infinite;
+}
+
+.copilot-avatar--active .copilot-avatar__head {
+  animation: headFloatActive 4s ease-in-out infinite;
+}
+
+.copilot-avatar--speaking .copilot-avatar__head {
+  animation: headNod 2s ease-in-out infinite;
+}
+
+.copilot-avatar__eyes {
+  transform-origin: 50px 50px;
+  animation: eyeLook 8s ease-in-out infinite;
+}
+
+.copilot-avatar__eye {
+  transform-origin: center;
+  animation: blink 5s ease-in-out infinite;
+}
+
+.copilot-avatar__eye--right {
+  animation-delay: 0.05s;
+}
+
+@keyframes headFloat {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-2deg) translateY(-1px); }
+  50% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(2deg) translateY(-1px); }
+}
+
+@keyframes headFloatActive {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  33% { transform: rotate(-3deg) translateY(-2px); }
+  66% { transform: rotate(3deg) translateY(-1px); }
+}
+
+@keyframes headNod {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(2deg); }
+  60% { transform: rotate(-1deg); }
+}
+
+@keyframes eyeLook {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(0); }
+  80% { transform: translateX(-1px); }
+}
+
+@keyframes blink {
+  0%, 46%, 48%, 100% { transform: scaleY(1); }
+  47% { transform: scaleY(0.08); }
+}
