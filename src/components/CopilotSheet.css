@@ -80,6 +80,28 @@
   color: var(--ck-gray-700);
 }
 
+.copilot-sheet__status--warn {
+  color: var(--ck-red);
+}
+
+.copilot-sheet__banner {
+  margin-bottom: var(--space-md);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.copilot-sheet__banner--error {
+  background: #fdecea;
+  color: var(--ck-red);
+}
+
+.copilot-sheet__banner--warn {
+  background: #fff8e6;
+  color: var(--ck-gray-900);
+}
+
 .copilot-sheet__messages {
   flex: 1;
   overflow-y: auto;
@@ -131,7 +153,7 @@
 .copilot-sheet__wave-bar {
   width: 4px;
   height: 12px;
-  background: var(--ck-blue);
+  background: var(--ck-accent);
   border-radius: 2px;
   animation: waveBar 0.8s ease-in-out infinite;
 }
@@ -149,7 +171,7 @@
 
 .copilot-sheet__listening-hint {
   font-weight: 600;
-  color: var(--ck-blue) !important;
+  color: var(--ck-accent) !important;
 }
 
 .copilot-sheet__transcript {
@@ -183,12 +205,12 @@
 }
 
 .copilot-sheet__mic:hover:not(:disabled) {
-  background: var(--ck-blue-light);
-  color: var(--ck-blue);
+  background: var(--ck-accent-light);
+  color: var(--ck-accent);
 }
 
 .copilot-sheet__mic--active {
-  background: var(--ck-blue);
+  background: var(--ck-accent);
   color: var(--ck-white);
   animation: micPulse 1s ease-in-out infinite;
 }
@@ -199,8 +221,8 @@
 }
 
 @keyframes micPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 119, 197, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(0, 119, 197, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 134, 0, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(0, 134, 0, 0); }
 }
 
 .copilot-sheet__input-form {
@@ -232,7 +254,7 @@
   height: 36px;
   border: none;
   border-radius: var(--radius-full);
-  background: var(--ck-blue);
+  background: var(--ck-accent);
   color: var(--ck-white);
   cursor: pointer;
   display: flex;
@@ -243,7 +265,7 @@
 }
 
 .copilot-sheet__send:hover:not(:disabled) {
-  background: var(--ck-blue-dark);
+  background: var(--ck-accent-dark);
 }
 
 .copilot-sheet__send:disabled {

@@ -17,6 +17,10 @@ const SEED_TRANSACTIONS: Activity[] = [
     asset: 'USDC',
     feeUsd: 0.12,
     timestamp: Date.now() - 1000 * 60 * 60 * 26,
+    status: 'sent',
+    transactionId: 'TX-SEED-SARAH-25',
+    deliveryMethod: 'Instant crypto transfer',
+    conversationId: 'seed-thread-1',
   },
   {
     id: 'seed-2',
@@ -26,6 +30,36 @@ const SEED_TRANSACTIONS: Activity[] = [
     asset: 'USDC',
     feeUsd: 0.12,
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 4,
+    status: 'sent',
+    transactionId: 'TX-SEED-JOHN-100',
+    deliveryMethod: 'Instant crypto transfer',
+    conversationId: 'seed-thread-2',
+  },
+  {
+    id: 'seed-3',
+    type: 'send',
+    contact: 'Mike',
+    amountUsd: 75,
+    asset: 'USDC',
+    feeUsd: 0.12,
+    timestamp: Date.now() - 1000 * 60 * 60 * 2,
+    status: 'failed',
+    transactionId: 'TX-SEED-MIKE-75-FAIL',
+    deliveryMethod: 'Instant crypto transfer',
+    conversationId: 'seed-thread-3',
+  },
+  {
+    id: 'seed-4',
+    type: 'send',
+    contact: 'Alex',
+    amountUsd: 40,
+    asset: 'USDC',
+    feeUsd: 0.12,
+    timestamp: Date.now() - 1000 * 60 * 3,
+    status: 'pending',
+    transactionId: 'TX-SEED-ALEX-40',
+    deliveryMethod: 'Instant crypto transfer',
+    conversationId: 'seed-thread-4',
   },
 ];
 
@@ -76,41 +110,74 @@ export function usePortfolio() {
     [getHolding]
   );
 
-  const executeSend = useCallback((request: SendRequest) => {
-    const fee = getNetworkFee(request.asset);
+  const executeSend = useCallback(
+    (
+      request: SendRequest,
+      meta?: {
+        transactionId: string;
+        deliveryMethod: string;
+        conversationId?: string;
+        status?: Activity['status'];
+      }
+    ) => {
+      const fee = getNetworkFee(request.asset);
 
-    setState((prev) => {
-      const holdings = prev.holdings.map((h) => {
-        if (h.symbol !== request.asset) return h;
+      setState((prev) => {
+        const holdings = prev.holdings.map((h) => {
+          if (h.symbol !== request.asset) return h;
 
-        const quantitySent =
-          request.asset === 'USDC' ? request.amountUsd : request.amountUsd / h.priceUsd;
-        const feeQuantity = request.asset === 'USDC' ? fee : fee / h.priceUsd;
+          const quantitySent =
+            request.asset === 'USDC' ? request.amountUsd : request.amountUsd / h.priceUsd;
+          const feeQuantity = request.asset === 'USDC' ? fee : fee / h.priceUsd;
+
+          return {
+            ...h,
+            quantity: Math.max(0, h.quantity - quantitySent - feeQuantity),
+          };
+        });
+
+        const activity: Activity = {
+          id: `${Date.now()}`,
+          type: 'send',
+          contact: request.contact,
+          amountUsd: request.amountUsd,
+          asset: request.asset,
+          feeUsd: fee,
+          timestamp: Date.now(),
+          status: meta?.status ?? 'pending',
+          transactionId: meta?.transactionId,
+          deliveryMethod: meta?.deliveryMethod,
+          conversationId: meta?.conversationId,
+        };
 
         return {
-          ...h,
-          quantity: Math.max(0, h.quantity - quantitySent - feeQuantity),
+          holdings,
+          transactions: [activity, ...prev.transactions],
         };
       });
 
-      const activity: Activity = {
-        id: `${Date.now()}`,
-        type: 'send',
-        contact: request.contact,
-        amountUsd: request.amountUsd,
-        asset: request.asset,
-        feeUsd: fee,
-        timestamp: Date.now(),
-      };
+      return fee;
+    },
+    []
+  );
 
-      return {
-        holdings,
-        transactions: [activity, ...prev.transactions],
-      };
-    });
+  const updateTransactionStatus = useCallback(
+    (transactionId: string, status: Activity['status']) => {
+      setState((prev) => ({
+        ...prev,
+        transactions: prev.transactions.map((tx) =>
+          tx.transactionId === transactionId || tx.id === transactionId ? { ...tx, status } : tx
+        ),
+      }));
+    },
+    []
+  );
 
-    return fee;
-  }, []);
+  const getTransaction = useCallback(
+    (id: string) =>
+      state.transactions.find((tx) => tx.id === id || tx.transactionId === id || tx.conversationId === id),
+    [state.transactions]
+  );
 
   const holdingsView = useMemo(
     () =>
@@ -140,6 +207,8 @@ export function usePortfolio() {
     getAssetBalanceUsd,
     canSend,
     executeSend,
+    updateTransactionStatus,
+    getTransaction,
     formatUsd,
   };
 }

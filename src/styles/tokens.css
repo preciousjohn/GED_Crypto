@@ -8,16 +8,32 @@
   --ck-gray-300: #d4d7dc;
   --ck-gray-100: #f4f5f8;
   --ck-green: #008600;
-  --ck-green-dark: #006b3f;
+  --ck-green-dark: #006b00;
   --ck-green-light: #e8f5e9;
+  --ck-green-fab: #00a651;
+  --ck-green-fab-dark: #007a3d;
+  --ck-green-fab-light: #7dd99a;
   --ck-red: #d52b1e;
-  --ck-blue: #0077c5;
-  --ck-blue-dark: #005da0;
-  --ck-blue-light: #e3f2fd;
 
-  /* Copilot avatar gradient */
-  --copilot-blue-start: #b8d4f0;
-  --copilot-blue-end: #0077c5;
+  /* Primary accent (Credit Karma green) */
+  --ck-accent: var(--ck-green);
+  --ck-accent-dark: var(--ck-green-dark);
+  --ck-accent-light: var(--ck-green-light);
+
+  /* Copilot / Intuit gradient */
+  --copilot-green-start: #7dd99a;
+  --copilot-green-end: #008600;
+
+  /* Copilot AI spectrum border (Credit Karma style) */
+  --copilot-spectrum: linear-gradient(
+    135deg,
+    #7b61ff 0%,
+    #0091ff 18%,
+    #00c853 36%,
+    #ffd600 54%,
+    #ff9100 72%,
+    #ff5252 100%
+  );
 
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -36,7 +52,7 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-fab: 0 4px 16px rgba(0, 119, 197, 0.35);
+  --shadow-fab: 0 4px 16px rgba(0, 0, 0, 0.32);
   --shadow-sheet: 0 -4px 24px rgba(0, 0, 0, 0.12);
 
   /* Mobile frame */

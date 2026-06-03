@@ -1,47 +1,113 @@
-.copilot-fab {
+.copilot-fab-wrap {
   position: absolute;
   bottom: 88px;
   right: 20px;
   z-index: 50;
   width: 64px;
   height: 64px;
-  padding: 4px;
+}
+
+.copilot-fab-wrap--open {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.copilot-fab {
+  --copilot-green-start: #5a5a5a;
+  --copilot-green-end: #1a1a1a;
+
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  padding: 0;
   border: none;
   border-radius: var(--radius-full);
-  background: var(--ck-white);
+  background: linear-gradient(180deg, #9a9a9a 0%, #6e6e6e 22%, #454545 48%, #262626 72%, #0a0a0a 100%);
   box-shadow: var(--shadow-fab);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.copilot-fab:hover {
+/* Static spectrum ring — matches Credit Karma copilot input border */
+.copilot-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: var(--copilot-spectrum);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.copilot-fab .copilot-avatar svg {
+  overflow: hidden;
+}
+
+.copilot-fab .copilot-avatar--active .copilot-avatar__head {
+  animation: fabHeadFloat 4s ease-in-out infinite;
+}
+
+@keyframes fabHeadFloat {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(2deg); }
+}
+
+.copilot-fab-wrap:not(.copilot-fab-wrap--open):hover .copilot-fab {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 119, 197, 0.45);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.42);
 }
 
 .copilot-fab:active {
   transform: scale(0.97);
 }
 
-.copilot-fab--open {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
-}
-
+/* Expanding light grey pulse rings — outline stays multicolor on .copilot-fab::before */
 .copilot-fab__pulse {
   position: absolute;
-  inset: -4px;
+  inset: 0;
   border-radius: var(--radius-full);
-  border: 2px solid var(--ck-blue);
-  opacity: 0;
-  animation: fabPulse 3s ease-out infinite;
+  pointer-events: none;
+  z-index: 0;
 }
 
-@keyframes fabPulse {
-  0% { transform: scale(1); opacity: 0.5; }
-  100% { transform: scale(1.35); opacity: 0; }
+.copilot-fab__pulse::before,
+.copilot-fab__pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(210, 210, 210, 0.5);
+  background: transparent;
+  opacity: 0;
+  animation: fabGreyPulse 3s ease-out infinite;
+}
+
+.copilot-fab__pulse::after {
+  animation-delay: 1.5s;
+}
+
+@keyframes fabGreyPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
 }

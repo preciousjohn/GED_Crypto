@@ -21,7 +21,7 @@
 }
 
 .message-bubble--user .message-bubble__content {
-  background: var(--ck-blue);
+  background: var(--ck-accent);
   color: var(--ck-white);
   border-bottom-right-radius: 4px;
 }
@@ -38,13 +38,6 @@
 
 .message-bubble__content p + p {
   margin-top: var(--space-sm);
-}
-
-.message-bubble__resolved {
-  margin: var(--space-sm) 0 0;
-  font-size: 13px;
-  color: var(--ck-gray-500);
-  font-style: italic;
 }
 
 .confirmation-card {
@@ -81,10 +74,6 @@
   font-weight: 600;
   text-align: right;
   color: var(--ck-black);
-}
-
-.confirmation-card__value--green {
-  color: var(--ck-green);
 }
 
 .confirmation-card__muted {

@@ -1,12 +1,15 @@
-import type { ConfirmationDetail, Message } from '../hooks/useCopilotConversation';
-import { SlideToConfirm } from './SlideToConfirm';
+import type { ConfirmationDetail, Message } from '../types/conversation';
+import { PaymentActions } from './PaymentActions';
+import { PaymentInfoCard } from './PaymentInfoCard';
 import './MessageBubble.css';
 
 interface MessageBubbleProps {
   message: Message;
   approvalActive?: boolean;
+  isProcessingPayment?: boolean;
   onApprove?: () => void;
   onDecline?: () => void;
+  onRetryPayment?: () => void;
 }
 
 function ConfirmationCard({ detail }: { detail: ConfirmationDetail }) {
@@ -36,17 +39,22 @@ function ConfirmationCard({ detail }: { detail: ConfirmationDetail }) {
         <span className="confirmation-card__label">Remaining balance</span>
         <span className="confirmation-card__value">{detail.remaining}</span>
       </div>
-      <div className="confirmation-card__row">
-        <span className="confirmation-card__label">Tax impact</span>
-        <span className="confirmation-card__value confirmation-card__value--green">{detail.taxImpact}</span>
-      </div>
     </div>
   );
 }
 
-export function MessageBubble({ message, approvalActive, onApprove, onDecline }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  approvalActive,
+  isProcessingPayment,
+  onApprove,
+  onDecline,
+  onRetryPayment,
+}: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const showApproval = message.requiresApproval && approvalActive && onApprove && onDecline;
+  const showProcessingActions =
+    message.requiresApproval && isProcessingPayment && onApprove && onDecline;
 
   return (
     <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--copilot'}`}>
@@ -55,15 +63,19 @@ export function MessageBubble({ message, approvalActive, onApprove, onDecline }:
           <p key={i}>{line}</p>
         ))}
         {message.detail && <ConfirmationCard detail={message.detail} />}
-        {showApproval && (
-          <SlideToConfirm
-            label="Slide to send payment"
+        {(showApproval || showProcessingActions) && (
+          <PaymentActions
             onConfirm={onApprove}
             onCancel={onDecline}
+            disabled={!approvalActive && !isProcessingPayment}
+            isProcessing={isProcessingPayment}
           />
         )}
-        {message.requiresApproval && !approvalActive && (
-          <p className="message-bubble__resolved">Payment resolved</p>
+        {message.paymentInfo && (
+          <PaymentInfoCard
+            info={message.paymentInfo}
+            onRetry={message.paymentInfo.status === 'failed' ? onRetryPayment : undefined}
+          />
         )}
       </div>
     </div>

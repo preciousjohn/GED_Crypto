@@ -202,7 +202,7 @@
   padding: 14px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--ck-blue);
+  background: var(--ck-accent);
   color: var(--ck-white);
   font-size: 16px;
   font-weight: 600;
@@ -210,5 +210,5 @@
 }
 
 .portfolio__action-btn:hover {
-  background: var(--ck-blue-dark);
+  background: var(--ck-accent-dark);
 }

@@ -1,0 +1,76 @@
+.payment-info-card {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--ck-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ck-gray-300);
+}
+
+.payment-info-card__title {
+  margin: 0 0 var(--space-sm);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ck-gray-900);
+}
+
+.payment-info-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.payment-info-card__row + .payment-info-card__row {
+  border-top: 1px solid var(--ck-gray-100);
+}
+
+.payment-info-card__label {
+  color: var(--ck-gray-700);
+  flex-shrink: 0;
+}
+
+.payment-info-card__value {
+  font-weight: 600;
+  text-align: right;
+  color: var(--ck-black);
+}
+
+.payment-info-card__value--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.payment-info-card__value--sent {
+  color: var(--ck-green);
+}
+
+.payment-info-card__value--pending,
+.payment-info-card__value--processing {
+  color: var(--ck-gray-700);
+}
+
+.payment-info-card__value--failed {
+  color: var(--ck-red);
+}
+
+.payment-info-card__retry {
+  margin-top: var(--space-sm);
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--ck-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ck-accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.payment-info-card__retry:hover {
+  background: var(--ck-accent);
+  color: var(--ck-white);
+}

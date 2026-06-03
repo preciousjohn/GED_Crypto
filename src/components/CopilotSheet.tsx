@@ -3,7 +3,6 @@ import { CopilotAvatar } from './CopilotAvatar';
 import { MessageBubble } from './MessageBubble';
 import { TransactionHistory } from './TransactionHistory';
 import type { useCopilotConversation } from '../hooks/useCopilotConversation';
-import type { PortfolioApi } from '../hooks/usePortfolio';
 import './CopilotSheet.css';
 
 type CopilotState = ReturnType<typeof useCopilotConversation>;
@@ -12,7 +11,6 @@ interface CopilotSheetProps {
   isOpen: boolean;
   onClose: () => void;
   copilot: CopilotState;
-  portfolio: PortfolioApi;
 }
 
 function BackIcon() {
@@ -32,39 +30,44 @@ function HistoryIcon() {
   );
 }
 
-export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotSheetProps) {
+export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
   const {
     messages,
+    paymentThreads,
     isListening,
     isTyping,
+    isProcessingPayment,
+    isOnline,
+    paymentError,
+    voiceError,
+    isSpeechSupported,
     liveTranscript,
     sendUserMessage,
     handleApprove,
     handleDecline,
+    handleRetryPayment,
     startListening,
     step,
     approvalActive,
+    openThread,
   } = copilot;
   const [input, setInput] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const historyOpen = isOpen && showHistory;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isOpen) setShowHistory(false);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!showHistory) {
+    if (!historyOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isTyping, approvalActive, showHistory]);
+  }, [messages, isTyping, approvalActive, isProcessingPayment, historyOpen]);
 
   useEffect(() => {
-    if (isOpen && !showHistory) {
+    if (isOpen && !historyOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
     }
-  }, [isOpen, showHistory]);
+  }, [isOpen, historyOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,33 +78,49 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
   };
 
   const handleBack = () => {
-    if (showHistory) {
+    if (historyOpen) {
       setShowHistory(false);
       return;
     }
+    setShowHistory(false);
     onClose();
   };
 
-  const speaking = isTyping || step === 'processing';
-  const micDisabled = isListening || isTyping || approvalActive || showHistory;
+  const handleSelectThread = (threadId: string) => {
+    openThread(threadId);
+    setShowHistory(false);
+  };
 
-  const statusText = showHistory
-    ? `${portfolio.transactions.length} payment${portfolio.transactions.length === 1 ? '' : 's'}`
-    : approvalActive
-      ? 'Slide to approve payment'
-      : isListening
-        ? 'Listening…'
-        : isTyping
-          ? 'Thinking…'
-          : step === 'success'
-            ? 'Payment sent'
-            : 'Type or tap mic';
+  const speaking = isTyping || step === 'processing' || isProcessingPayment;
+  const micDisabled = isListening || isTyping || approvalActive || isProcessingPayment || historyOpen;
+
+  const statusText = historyOpen
+    ? `${paymentThreads.length} conversation${paymentThreads.length === 1 ? '' : 's'}`
+    : !isOnline
+      ? 'Offline — reconnect to send payments'
+      : approvalActive
+        ? 'Review payment below'
+        : isProcessingPayment
+          ? 'Processing payment…'
+          : isListening
+            ? 'Listening… tap mic to stop'
+            : isTyping
+              ? 'Thinking…'
+              : !isSpeechSupported
+                ? 'Voice unavailable — type your request'
+                : step === 'success'
+                ? 'Payment sent'
+                : step === 'pending'
+                  ? 'Payment pending'
+                  : step === 'failed'
+                  ? 'Payment failed'
+                  : 'Type or tap mic';
 
   return (
     <div
       className={`copilot-sheet ${isOpen ? 'copilot-sheet--open' : ''}`}
       role="dialog"
-      aria-label={showHistory ? 'Transaction history' : 'Crypto Copilot'}
+      aria-label={historyOpen ? 'Transaction history' : 'Crypto Copilot'}
       aria-modal="true"
       aria-hidden={!isOpen}
     >
@@ -110,22 +129,24 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
           type="button"
           className="copilot-sheet__nav-btn"
           onClick={handleBack}
-          aria-label={showHistory ? 'Back to Crypto Copilot' : 'Back to portfolio'}
+          aria-label={historyOpen ? 'Back to Crypto Copilot' : 'Back to portfolio'}
         >
           <BackIcon />
         </button>
 
         <div className="copilot-sheet__header-center">
-          {!showHistory && <CopilotAvatar size={36} active speaking={speaking} />}
+          {!historyOpen && <CopilotAvatar size={36} active speaking={speaking} />}
           <div className="copilot-sheet__header-text">
             <h2 className="copilot-sheet__title">
-              {showHistory ? 'Transaction history' : 'Crypto Copilot'}
+              {historyOpen ? 'Transaction history' : 'Crypto Copilot'}
             </h2>
-            <p className="copilot-sheet__status">{statusText}</p>
+            <p className={`copilot-sheet__status ${!isOnline ? 'copilot-sheet__status--warn' : ''}`}>
+              {statusText}
+            </p>
           </div>
         </div>
 
-        {showHistory ? (
+        {historyOpen ? (
           <span className="copilot-sheet__nav-spacer" aria-hidden="true" />
         ) : (
           <button
@@ -139,20 +160,37 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
         )}
       </header>
 
-      {showHistory ? (
+      {historyOpen ? (
         <div className="copilot-sheet__history">
-          <TransactionHistory transactions={portfolio.transactions} />
+          <TransactionHistory threads={paymentThreads} onSelectThread={handleSelectThread} />
         </div>
       ) : (
         <>
           <div className="copilot-sheet__messages">
+            {paymentError && step === 'confirmation' && (
+              <div className="copilot-sheet__banner copilot-sheet__banner--error" role="alert">
+                {paymentError}
+              </div>
+            )}
+            {!isOnline && (
+              <div className="copilot-sheet__banner copilot-sheet__banner--warn" role="status">
+                You're offline. Messages are saved — reconnect to send payments.
+              </div>
+            )}
+            {voiceError && (
+              <div className="copilot-sheet__banner copilot-sheet__banner--warn" role="alert">
+                {voiceError}
+              </div>
+            )}
             {messages.map((msg) => (
               <MessageBubble
                 key={msg.id}
                 message={msg}
                 approvalActive={approvalActive}
+                isProcessingPayment={isProcessingPayment && msg.requiresApproval === true}
                 onApprove={handleApprove}
                 onDecline={handleDecline}
+                onRetryPayment={handleRetryPayment}
               />
             ))}
             {isTyping && (
@@ -180,10 +218,19 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
             <button
               type="button"
               className={`copilot-sheet__mic ${isListening ? 'copilot-sheet__mic--active' : ''}`}
-              onClick={startListening}
-              disabled={micDisabled}
-              aria-label="Speak your payment request"
-              title={approvalActive ? 'Approve the payment with the slide control first' : 'Voice input'}
+              onClick={() => void startListening()}
+              disabled={micDisabled && !isListening}
+              aria-label={isListening ? 'Stop listening' : 'Speak your payment request'}
+              aria-pressed={isListening}
+              title={
+                !isSpeechSupported
+                  ? 'Voice input is not supported in this browser'
+                  : approvalActive
+                    ? 'Confirm the payment with Send Payment first'
+                    : isListening
+                      ? 'Tap to stop listening'
+                      : 'Voice input'
+              }
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
@@ -197,8 +244,8 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
                 className="copilot-sheet__input"
                 placeholder={
                   approvalActive
-                    ? 'Approve with slide below…'
-                    : 'Send request...'
+                    ? 'Confirm with Send Payment below…'
+                    : 'Send or ask about a payment…'
                 }
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

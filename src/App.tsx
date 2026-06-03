@@ -13,6 +13,11 @@ function App() {
   const portfolio = usePortfolio();
   const copilot = useCopilotConversation(copilotOpen, portfolio, USERNAME);
 
+  const handleOpenCopilot = () => {
+    copilot.createNewThread();
+    setCopilotOpen(true);
+  };
+
   return (
     <div className="app">
       <div className="phone-frame">
@@ -27,14 +32,13 @@ function App() {
 
         <main className="phone-frame__content">
           <PortfolioScreen portfolio={portfolio} />
-          <CopilotFAB onClick={() => setCopilotOpen(true)} isOpen={copilotOpen} />
+          <CopilotFAB onClick={handleOpenCopilot} isOpen={copilotOpen} />
         </main>
 
         <CopilotSheet
           isOpen={copilotOpen}
           onClose={() => setCopilotOpen(false)}
           copilot={copilot}
-          portfolio={portfolio}
         />
       </div>
     </div>

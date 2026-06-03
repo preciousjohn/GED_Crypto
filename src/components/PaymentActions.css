@@ -1,0 +1,49 @@
+.payment-actions {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.payment-actions__send {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--ck-accent);
+  color: var(--ck-white);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.payment-actions__send:hover:not(:disabled) {
+  background: var(--ck-accent-dark);
+}
+
+.payment-actions__send:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.payment-actions__cancel {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--ck-gray-700);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.payment-actions__cancel:hover:not(:disabled) {
+  color: var(--ck-red);
+}
+
+.payment-actions__cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

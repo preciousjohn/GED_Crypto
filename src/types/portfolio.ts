@@ -14,6 +14,8 @@ export interface PortfolioState {
   transactions: Activity[];
 }
 
+import type { PaymentStatus } from './conversation';
+
 export interface Activity {
   id: string;
   type: 'send';
@@ -22,6 +24,10 @@ export interface Activity {
   asset: AssetSymbol;
   feeUsd: number;
   timestamp: number;
+  status: PaymentStatus;
+  transactionId?: string;
+  deliveryMethod?: string;
+  conversationId?: string;
 }
 
 export interface SendRequest {
