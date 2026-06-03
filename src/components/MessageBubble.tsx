@@ -1,9 +1,12 @@
 import type { ConfirmationDetail, Message } from '../hooks/useCopilotConversation';
+import { SlideToConfirm } from './SlideToConfirm';
 import './MessageBubble.css';
 
 interface MessageBubbleProps {
   message: Message;
-  onAction?: (value: string) => void;
+  approvalActive?: boolean;
+  onApprove?: () => void;
+  onDecline?: () => void;
 }
 
 function ConfirmationCard({ detail }: { detail: ConfirmationDetail }) {
@@ -13,6 +16,12 @@ function ConfirmationCard({ detail }: { detail: ConfirmationDetail }) {
         <span className="confirmation-card__label">To</span>
         <span className="confirmation-card__value">{detail.contact}</span>
       </div>
+      {detail.memo && (
+        <div className="confirmation-card__row">
+          <span className="confirmation-card__label">For</span>
+          <span className="confirmation-card__value">{detail.memo}</span>
+        </div>
+      )}
       <div className="confirmation-card__row confirmation-card__row--highlight">
         <span className="confirmation-card__label">Amount</span>
         <span className="confirmation-card__value">
@@ -35,8 +44,9 @@ function ConfirmationCard({ detail }: { detail: ConfirmationDetail }) {
   );
 }
 
-export function MessageBubble({ message, onAction }: MessageBubbleProps) {
+export function MessageBubble({ message, approvalActive, onApprove, onDecline }: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const showApproval = message.requiresApproval && approvalActive && onApprove && onDecline;
 
   return (
     <div className={`message-bubble ${isUser ? 'message-bubble--user' : 'message-bubble--copilot'}`}>
@@ -45,19 +55,15 @@ export function MessageBubble({ message, onAction }: MessageBubbleProps) {
           <p key={i}>{line}</p>
         ))}
         {message.detail && <ConfirmationCard detail={message.detail} />}
-        {message.actions && onAction && (
-          <div className="message-bubble__actions">
-            {message.actions.map((action) => (
-              <button
-                key={action.value}
-                type="button"
-                className={`message-bubble__action ${action.value === 'yes' ? 'message-bubble__action--primary' : ''}`}
-                onClick={() => onAction(action.value)}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
+        {showApproval && (
+          <SlideToConfirm
+            label="Slide to send payment"
+            onConfirm={onApprove}
+            onCancel={onDecline}
+          />
+        )}
+        {message.requiresApproval && !approvalActive && (
+          <p className="message-bubble__resolved">Payment resolved</p>
         )}
       </div>
     </div>

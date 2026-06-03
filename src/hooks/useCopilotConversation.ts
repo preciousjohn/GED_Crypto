@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getListeningHint, parseVoiceIntent } from '../utils/voiceIntent';
+import { useCallback, useRef, useState } from 'react';
+import type { PortfolioApi } from './usePortfolio';
+import type { SendRequest } from '../types/portfolio';
+import { formatQuantity, formatUsd, getNetworkFee, parseSendIntent } from '../utils/sendIntent';
 import { useSpeechRecognition } from './useSpeechRecognition';
 
 export type ConversationStep =
@@ -15,7 +17,7 @@ export interface Message {
   role: 'user' | 'copilot';
   text: string;
   detail?: ConfirmationDetail;
-  actions?: { label: string; value: string }[];
+  requiresApproval?: boolean;
 }
 
 export interface ConfirmationDetail {
@@ -26,26 +28,28 @@ export interface ConfirmationDetail {
   networkFee: string;
   remaining: string;
   taxImpact: string;
+  memo?: string;
 }
 
 const INITIAL_MESSAGES: Message[] = [
   {
     id: 'welcome',
     role: 'copilot',
-    text: "Hi! I'm Crypto Copilot. Tell me who to pay and how much — I'll handle the rest.",
+    text: "Hi! I'm Crypto Copilot. Tell me who to pay and how much — e.g. \"Send Sarah $50 in USDC for dinner.\"",
   },
 ];
 
-export function useCopilotConversation(isOpen = false) {
+export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi) {
   const [step, setStep] = useState<ConversationStep>('idle');
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [isTyping, setIsTyping] = useState(false);
   const [isSimulatingVoice, setIsSimulatingVoice] = useState(false);
   const [simulatedTranscript, setSimulatedTranscript] = useState('');
+  const [pendingSend, setPendingSend] = useState<SendRequest | null>(null);
   const stepRef = useRef(step);
   stepRef.current = step;
-  const confirmationListenRef = useRef(false);
-  const startListeningRef = useRef<() => void>(() => {});
+  const pendingSendRef = useRef(pendingSend);
+  pendingSendRef.current = pendingSend;
 
   const speech = useSpeechRecognition();
   const isListening = speech.isListening || isSimulatingVoice;
@@ -63,114 +67,122 @@ export function useCopilotConversation(isOpen = false) {
     callback();
   }, []);
 
-  const handleConfirmation = useCallback(
-    (decision: 'yes' | 'no', spokenText?: string) => {
-      if (decision === 'yes') {
-        setStep('confirmed');
-        if (spokenText) {
-          addMessage({ role: 'user', text: spokenText });
-        } else {
-          addMessage({ role: 'user', text: 'Yes' });
-        }
-        simulateTyping(() => {
-          addMessage({
-            role: 'copilot',
-            text: "Done. Sarah will see it in ~10 seconds.\n\nReceipt saved. I'll auto-categorize this in your TurboTax.",
-          });
-          setStep('success');
-        }, 800);
+  const handleDecline = useCallback(() => {
+    setPendingSend(null);
+    addMessage({ role: 'user', text: 'Cancelled' });
+    simulateTyping(() => {
+      addMessage({ role: 'copilot', text: 'Payment cancelled. Say another amount or contact whenever you\'re ready.' });
+      setStep('idle');
+    }, 500);
+  }, [addMessage, simulateTyping]);
+
+  const handleApprove = useCallback(() => {
+    const request = pendingSendRef.current;
+    if (!request || stepRef.current !== 'confirmation') return;
+
+    const fee = portfolio.executeSend(request);
+    setPendingSend(null);
+    setStep('confirmed');
+
+    addMessage({ role: 'user', text: `Approved — send ${formatUsd(request.amountUsd)} ${request.asset} to ${request.contact}` });
+
+    simulateTyping(() => {
+      addMessage({
+        role: 'copilot',
+        text: `Done. ${request.contact} will see ${formatUsd(request.amountUsd)} in ~10 seconds.\n\nNetwork fee: ${formatUsd(fee)}. Receipt saved for TurboTax.`,
+      });
+      setStep('success');
+    }, 900);
+  }, [addMessage, portfolio, simulateTyping]);
+
+  const buildConfirmation = useCallback(
+    (request: SendRequest) => {
+      const fee = getNetworkFee(request.asset);
+      const check = portfolio.canSend(request);
+      if (!check.ok) {
+        addMessage({ role: 'copilot', text: check.reason });
+        setStep('idle');
         return;
       }
 
-      addMessage({ role: 'user', text: spokenText ?? 'No' });
-      simulateTyping(() => {
-        addMessage({ role: 'copilot', text: 'No problem — send cancelled. Let me know if you want to try again.' });
-        setStep('idle');
+      const holding = portfolio.getHolding(request.asset)!;
+      const remainingQty = check.remaining;
+      const taxImpact =
+        request.asset === 'USDC'
+          ? '$0 (stablecoin, no gain/loss)'
+          : 'Estimated — cost basis applied on send';
+
+      setPendingSend(request);
+      addMessage({
+        role: 'copilot',
+        text: 'Review and approve this payment:',
+        requiresApproval: true,
+        detail: {
+          contact: `${request.contact} (your contact)`,
+          amount: `${formatUsd(request.amountUsd)} ${request.asset}`,
+          equivalent: request.asset === 'USDC' ? '≈ ' + formatUsd(request.amountUsd) : `≈ ${formatQuantity(request.asset, request.amountUsd / holding.priceUsd)}`,
+          asset: request.asset,
+          networkFee: formatUsd(fee),
+          remaining: formatQuantity(request.asset, remainingQty),
+          taxImpact,
+          memo: request.memo,
+        },
       });
+      setStep('confirmation');
     },
-    [addMessage, simulateTyping]
+    [addMessage, portfolio]
   );
 
   const handleSendIntent = useCallback(
-    (spokenText?: string) => {
-      if (spokenText) {
-        addMessage({ role: 'user', text: spokenText });
-      } else {
-        addMessage({ role: 'user', text: 'Send Sarah $50 in USDC for dinner.' });
-      }
+    (text: string, parsed = parseSendIntent(text)) => {
+      if (!parsed) return false;
+
+      addMessage({ role: 'user', text });
       setStep('processing');
+
       simulateTyping(() => {
-        addMessage({
-          role: 'copilot',
-          text: 'Confirm send?',
-          detail: {
-            contact: 'Sarah Chen (your contact)',
-            amount: '$50.00 USDC',
-            equivalent: '≈ $50.00',
-            asset: 'USDC',
-            networkFee: '$0.12',
-            remaining: '$1,247.88',
-            taxImpact: '$0 (USDC stablecoin, no gain/loss)',
-          },
-          actions: [
-            { label: 'Yes', value: 'yes' },
-            { label: 'No', value: 'no' },
-          ],
-        });
-        setStep('confirmation');
-      }, 1500);
+        buildConfirmation(parsed);
+      }, 1200);
+
+      return true;
     },
-    [addMessage, simulateTyping]
+    [addMessage, buildConfirmation, simulateTyping]
   );
 
-  const processVoiceInput = useCallback(
+  const processUserInput = useCallback(
     (text: string) => {
       const currentStep = stepRef.current;
-      const intentStep = currentStep === 'confirmation' ? 'confirmation' : 'other';
-      const intent = parseVoiceIntent(text, intentStep);
 
       if (currentStep === 'confirmation') {
-        if (intent === 'yes') {
-          handleConfirmation('yes', text);
-          return;
-        }
-        if (intent === 'no') {
-          handleConfirmation('no', text);
-          return;
-        }
         addMessage({ role: 'user', text });
         simulateTyping(() => {
           addMessage({
             role: 'copilot',
-            text: 'I didn\'t catch that. Say "Yes" to send, or "No" to cancel.',
+            text: 'Use the slide control below to approve, or tap Cancel payment.',
           });
-          setTimeout(() => startListeningRef.current(), 500);
-        }, 600);
+        }, 400);
         return;
       }
 
-      if (intent === 'send') {
-        handleSendIntent(text);
-        return;
-      }
+      if (handleSendIntent(text)) return;
 
       addMessage({ role: 'user', text });
       simulateTyping(() => {
         addMessage({
           role: 'copilot',
-          text: 'Try saying: "Send Sarah $50 in USDC for dinner."',
+          text: 'Try: "Send Sarah $50 in USDC for dinner" or "Pay John $25 in ETH for tickets."',
         });
         setStep('idle');
       });
     },
-    [addMessage, handleConfirmation, handleSendIntent, simulateTyping]
+    [addMessage, handleSendIntent, simulateTyping]
   );
 
   const sendUserMessage = useCallback(
     (text: string) => {
-      processVoiceInput(text);
+      processUserInput(text);
     },
-    [processVoiceInput]
+    [processUserInput]
   );
 
   const simulateVoiceInput = useCallback(
@@ -189,68 +201,40 @@ export function useCopilotConversation(isOpen = false) {
           setTimeout(() => {
             setIsSimulatingVoice(false);
             setSimulatedTranscript('');
-            processVoiceInput(text);
+            processUserInput(text);
           }, 400);
         }
       }, 180);
     },
-    [processVoiceInput]
+    [processUserInput]
   );
 
   const startListening = useCallback(() => {
-    if (isListening || isTyping) return;
+    if (isListening || isTyping || stepRef.current === 'confirmation') return;
 
-    const currentStep = stepRef.current;
-    const fallbackText =
-      currentStep === 'confirmation' ? 'Yes' : 'Send Sarah $50 in USDC for dinner.';
+    const fallbackText = 'Send Sarah $50 in USDC for dinner.';
 
-    const started = speech.startListening(processVoiceInput, () => {
+    const started = speech.startListening(processUserInput, () => {
       simulateVoiceInput(fallbackText);
     });
 
     if (!started) {
       simulateVoiceInput(fallbackText);
     }
-  }, [isListening, isTyping, processVoiceInput, simulateVoiceInput, speech]);
-
-  startListeningRef.current = startListening;
-
-  const handleAction = useCallback(
-    (value: string) => {
-      if (stepRef.current === 'confirmation') {
-        handleConfirmation(value === 'yes' ? 'yes' : 'no');
-        return;
-      }
-      sendUserMessage(value === 'yes' ? 'Yes' : 'No');
-    },
-    [handleConfirmation, sendUserMessage]
-  );
-
-  useEffect(() => {
-    if (step !== 'confirmation') {
-      confirmationListenRef.current = false;
-    }
-  }, [step]);
-
-  useEffect(() => {
-    if (step === 'confirmation' && isOpen && !isListening && !isTyping && !confirmationListenRef.current) {
-      confirmationListenRef.current = true;
-      const timer = setTimeout(() => startListening(), 700);
-      return () => clearTimeout(timer);
-    }
-  }, [step, isOpen, isListening, isTyping, startListening]);
+  }, [isListening, isTyping, processUserInput, simulateVoiceInput, speech]);
 
   const reset = useCallback(() => {
     setStep('idle');
     setMessages(INITIAL_MESSAGES);
+    setPendingSend(null);
     setIsSimulatingVoice(false);
     setSimulatedTranscript('');
     setIsTyping(false);
     speech.stopListening();
   }, [speech]);
 
-  const listeningHint = getListeningHint(step === 'confirmation' ? 'confirmation' : 'idle');
   const liveTranscript = speech.interimTranscript || simulatedTranscript;
+  const approvalActive = step === 'confirmation' && pendingSend !== null;
 
   return {
     step,
@@ -258,9 +242,10 @@ export function useCopilotConversation(isOpen = false) {
     isListening,
     isTyping,
     liveTranscript,
-    listeningHint,
+    approvalActive,
     sendUserMessage,
-    handleAction,
+    handleApprove,
+    handleDecline,
     startListening,
     reset,
   };

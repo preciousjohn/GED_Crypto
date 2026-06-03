@@ -40,37 +40,11 @@
   margin-top: var(--space-sm);
 }
 
-.message-bubble__actions {
-  display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-}
-
-.message-bubble__action {
-  flex: 1;
-  padding: 10px 16px;
-  border: 1.5px solid var(--ck-gray-300);
-  border-radius: var(--radius-md);
-  background: var(--ck-white);
-  color: var(--ck-gray-900);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.message-bubble__action:hover {
-  background: var(--ck-gray-100);
-}
-
-.message-bubble__action--primary {
-  background: var(--ck-blue);
-  border-color: var(--ck-blue);
-  color: var(--ck-white);
-}
-
-.message-bubble__action--primary:hover {
-  background: var(--ck-blue-dark);
+.message-bubble__resolved {
+  margin: var(--space-sm) 0 0;
+  font-size: 13px;
+  color: var(--ck-gray-500);
+  font-style: italic;
 }
 
 .confirmation-card {
