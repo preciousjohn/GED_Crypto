@@ -6,10 +6,12 @@ import { useCopilotConversation } from './hooks/useCopilotConversation';
 import { usePortfolio } from './hooks/usePortfolio';
 import './App.css';
 
+const USERNAME = 'Precious';
+
 function App() {
   const [copilotOpen, setCopilotOpen] = useState(false);
   const portfolio = usePortfolio();
-  const copilot = useCopilotConversation(copilotOpen, portfolio);
+  const copilot = useCopilotConversation(copilotOpen, portfolio, USERNAME);
 
   return (
     <div className="app">

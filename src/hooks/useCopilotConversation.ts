@@ -31,17 +31,19 @@ export interface ConfirmationDetail {
   memo?: string;
 }
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: 'welcome',
-    role: 'copilot',
-    text: "Hi! I'm Crypto Copilot. Tell me who to pay and how much — e.g. \"Send Sarah $50 in USDC for dinner.\"",
-  },
-];
+function getInitialMessages(username: string): Message[] {
+  return [
+    {
+      id: 'welcome',
+      role: 'copilot',
+      text: `Hey ${username}. Tell me who to pay and how much — e.g. "Send Sarah $50 in USDC for dinner."`,
+    },
+  ];
+}
 
-export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi) {
+export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi, username: string) {
   const [step, setStep] = useState<ConversationStep>('idle');
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState(() => getInitialMessages(username));
   const [isTyping, setIsTyping] = useState(false);
   const [isSimulatingVoice, setIsSimulatingVoice] = useState(false);
   const [simulatedTranscript, setSimulatedTranscript] = useState('');
@@ -225,13 +227,13 @@ export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi
 
   const reset = useCallback(() => {
     setStep('idle');
-    setMessages(INITIAL_MESSAGES);
+    setMessages(getInitialMessages(username));
     setPendingSend(null);
     setIsSimulatingVoice(false);
     setSimulatedTranscript('');
     setIsTyping(false);
     speech.stopListening();
-  }, [speech]);
+  }, [speech, username]);
 
   const liveTranscript = speech.interimTranscript || simulatedTranscript;
   const approvalActive = step === 'confirmation' && pendingSend !== null;

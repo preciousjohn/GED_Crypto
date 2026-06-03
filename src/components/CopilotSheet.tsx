@@ -95,7 +95,7 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
           ? 'Thinking…'
           : step === 'success'
             ? 'Payment sent'
-            : 'Ready — type or tap mic';
+            : 'Type or tap mic';
 
   return (
     <div
@@ -198,7 +198,7 @@ export function CopilotSheet({ isOpen, onClose, copilot, portfolio }: CopilotShe
                 placeholder={
                   approvalActive
                     ? 'Approve with slide below…'
-                    : 'Send Sarah $50 in USDC for dinner…'
+                    : 'Send request...'
                 }
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
