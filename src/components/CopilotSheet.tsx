@@ -39,8 +39,6 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
     isProcessingPayment,
     isOnline,
     paymentError,
-    voiceError,
-    isSpeechSupported,
     liveTranscript,
     sendUserMessage,
     handleApprove,
@@ -53,6 +51,7 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
   } = copilot;
   const [input, setInput] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [viewingFromHistory, setViewingFromHistory] = useState(false);
   const historyOpen = isOpen && showHistory;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,13 +81,20 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
       setShowHistory(false);
       return;
     }
+    if (viewingFromHistory) {
+      setShowHistory(true);
+      setViewingFromHistory(false);
+      return;
+    }
     setShowHistory(false);
+    setViewingFromHistory(false);
     onClose();
   };
 
   const handleSelectThread = (threadId: string) => {
     openThread(threadId);
     setShowHistory(false);
+    setViewingFromHistory(true);
   };
 
   const speaking = isTyping || step === 'processing' || isProcessingPayment;
@@ -103,12 +109,10 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
         : isProcessingPayment
           ? 'Processing payment…'
           : isListening
-            ? 'Listening… tap mic to stop'
+            ? 'Listening…'
             : isTyping
               ? 'Thinking…'
-              : !isSpeechSupported
-                ? 'Voice unavailable — type your request'
-                : step === 'success'
+              : step === 'success'
                 ? 'Payment sent'
                 : step === 'pending'
                   ? 'Payment pending'
@@ -129,7 +133,13 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
           type="button"
           className="copilot-sheet__nav-btn"
           onClick={handleBack}
-          aria-label={historyOpen ? 'Back to Crypto Copilot' : 'Back to portfolio'}
+          aria-label={
+            historyOpen
+              ? 'Back to Crypto Copilot'
+              : viewingFromHistory
+                ? 'Back to transaction history'
+                : 'Back to portfolio'
+          }
         >
           <BackIcon />
         </button>
@@ -152,7 +162,10 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
           <button
             type="button"
             className="copilot-sheet__nav-btn"
-            onClick={() => setShowHistory(true)}
+            onClick={() => {
+              setViewingFromHistory(false);
+              setShowHistory(true);
+            }}
             aria-label="View transaction history"
           >
             <HistoryIcon />
@@ -175,11 +188,6 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
             {!isOnline && (
               <div className="copilot-sheet__banner copilot-sheet__banner--warn" role="status">
                 You're offline. Messages are saved — reconnect to send payments.
-              </div>
-            )}
-            {voiceError && (
-              <div className="copilot-sheet__banner copilot-sheet__banner--warn" role="alert">
-                {voiceError}
               </div>
             )}
             {messages.map((msg) => (
@@ -218,19 +226,10 @@ export function CopilotSheet({ isOpen, onClose, copilot }: CopilotSheetProps) {
             <button
               type="button"
               className={`copilot-sheet__mic ${isListening ? 'copilot-sheet__mic--active' : ''}`}
-              onClick={() => void startListening()}
-              disabled={micDisabled && !isListening}
-              aria-label={isListening ? 'Stop listening' : 'Speak your payment request'}
-              aria-pressed={isListening}
-              title={
-                !isSpeechSupported
-                  ? 'Voice input is not supported in this browser'
-                  : approvalActive
-                    ? 'Confirm the payment with Send Payment first'
-                    : isListening
-                      ? 'Tap to stop listening'
-                      : 'Voice input'
-              }
+              onClick={startListening}
+              disabled={micDisabled}
+              aria-label="Speak your payment request"
+              title={approvalActive ? 'Confirm the payment with Send Payment first' : 'Voice input'}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />

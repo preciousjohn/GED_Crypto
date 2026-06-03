@@ -206,7 +206,8 @@ export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [step, setStep] = useState<ConversationStep>('idle');
   const [isTyping, setIsTyping] = useState(false);
-  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [isSimulatingVoice, setIsSimulatingVoice] = useState(false);
+  const [simulatedTranscript, setSimulatedTranscript] = useState('');
   const [pendingSend, setPendingSend] = useState<SendRequest | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
@@ -223,7 +224,7 @@ export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi
   activeThreadIdRef.current = activeThreadId;
 
   const speech = useSpeechRecognition();
-  const isListening = speech.isListening;
+  const isListening = speech.isListening || isSimulatingVoice;
 
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
   const messages = activeThread?.messages ?? [];
@@ -726,33 +727,47 @@ export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi
     [processUserInput]
   );
 
-  const startListening = useCallback(async () => {
-    if (isTyping || stepRef.current === 'confirmation' || isProcessingRef.current) return;
+  const simulateVoiceInput = useCallback(
+    (text: string) => {
+      setIsSimulatingVoice(true);
+      setSimulatedTranscript('');
 
-    if (isListening) {
-      speech.stopListening();
-      return;
-    }
+      const words = text.split(' ');
+      let index = 0;
 
-    setVoiceError(null);
-
-    await speech.startListening({
-      onResult: (text) => {
-        setVoiceError(null);
-        if (text) processUserInput(text);
-      },
-      onError: (error) => {
-        if (error.message) {
-          setVoiceError(error.message);
-          addMessage({ role: 'copilot', text: error.message });
+      const interval = setInterval(() => {
+        index += 1;
+        setSimulatedTranscript(words.slice(0, index).join(' '));
+        if (index >= words.length) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsSimulatingVoice(false);
+            setSimulatedTranscript('');
+            processUserInput(text);
+          }, 400);
         }
-      },
+      }, 180);
+    },
+    [processUserInput]
+  );
+
+  const startListening = useCallback(() => {
+    if (isListening || isTyping || stepRef.current === 'confirmation' || isProcessingRef.current) return;
+
+    const fallbackText = 'Send Sarah $50 in USDC for dinner.';
+
+    const started = speech.startListening(processUserInput, () => {
+      simulateVoiceInput(fallbackText);
     });
-  }, [addMessage, isListening, isTyping, processUserInput, speech]);
+
+    if (!started) {
+      simulateVoiceInput(fallbackText);
+    }
+  }, [isListening, isTyping, processUserInput, simulateVoiceInput, speech]);
 
   const paymentThreads = useMemoizedPaymentThreads(threads);
 
-  const liveTranscript = speech.interimTranscript;
+  const liveTranscript = speech.interimTranscript || simulatedTranscript;
   const approvalActive = step === 'confirmation' && pendingSend !== null && !isProcessingPayment;
 
   return {
@@ -766,8 +781,6 @@ export function useCopilotConversation(_isOpen: boolean, portfolio: PortfolioApi
     isProcessingPayment,
     isOnline,
     paymentError,
-    voiceError,
-    isSpeechSupported: speech.isSupported,
     liveTranscript,
     approvalActive,
     sendUserMessage,
